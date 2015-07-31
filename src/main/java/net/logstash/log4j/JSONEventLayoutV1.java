@@ -10,11 +10,15 @@ import org.apache.log4j.spi.LocationInfo;
 import org.apache.log4j.spi.LoggingEvent;
 import org.apache.log4j.spi.ThrowableInformation;
 
+import com.google.gson.Gson;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TimeZone;
 
 public class JSONEventLayoutV1 extends Layout {
+	
+	public static final Gson gson = new Gson();
 
     private boolean locationInfo = false;
     private String customUserFields;
@@ -103,7 +107,7 @@ public class JSONEventLayoutV1 extends Layout {
          * Now we start injecting our own stuff.
          */
         logstashEvent.put("source_host", hostname);
-        logstashEvent.put("message", loggingEvent.getRenderedMessage());
+        logstashEvent.put("message", gson.toJson(loggingEvent.getRenderedMessage()));
 
         if (loggingEvent.getThrowableInformation() != null) {
             final ThrowableInformation throwableInformation = loggingEvent.getThrowableInformation();
@@ -123,7 +127,7 @@ public class JSONEventLayoutV1 extends Layout {
         if (locationInfo) {
             info = loggingEvent.getLocationInformation();
             addEventData("file", info.getFileName());
-            addEventData("line_number", info.getLineNumber());
+            addEventData("line", info.getLineNumber());
             addEventData("class", info.getClassName());
             addEventData("method", info.getMethodName());
         }
@@ -131,7 +135,8 @@ public class JSONEventLayoutV1 extends Layout {
         addEventData("logger_name", loggingEvent.getLoggerName());
         addEventData("mdc", mdc);
         addEventData("ndc", ndc);
-        addEventData("level", loggingEvent.getLevel().toString());
+        addEventData("level", loggingEvent.getLevel().toInt());
+        addEventData("level.text", loggingEvent.getLevel().toString());
         addEventData("thread_name", threadName);
 
         return logstashEvent.toString() + "\n";
